@@ -9,3 +9,13 @@ id,title,artist,genre,mood,energy,tempo_bpm,valence,danceability,acousticness
 8,Night Drive Loop,Neon Echo,synthwave,moody,0.75,110,0.49,0.73,0.22
 9,Focus Flow,LoRoom,lofi,focused,0.40,80,0.59,0.60,0.78
 10,Rooftop Lights,Indigo Parade,indie pop,happy,0.76,124,0.81,0.82,0.35
+11,Midnight Drive,Echo Waves,electronic,excited,0.95,140,0.85,0.9,0.1
+12,Rainy Day Blues,Blue Notes,country,sad,0.25,80,0.2,0.4,0.8
+13,Urban Pulse,Street Vibe,hip-hop,moody,0.75,110,0.5,0.8,0.15
+14,Ancient Echoes,Timeless Strings,classical,calm,0.1,50,0.7,0.2,0.95
+15,Island Rhythms,Tropical Beats,reggae,relaxed,0.6,90,0.8,0.75,0.4
+16,Thunder Storm,Storm Chasers,metal,angry,0.98,160,0.1,0.65,0.05
+17,Dreamy Horizons,Celestial Sounds,folk,nostalgic,0.4,70,0.6,0.5,0.85
+18,Cosmic Journey,Star Pilots,electronic,focused,0.85,130,0.75,0.85,0.2
+19,Sunset Serenade,Golden Hour,classical,relaxed,0.2,60,0.9,0.3,0.9
+20,Wildfire Groove,Flame Dancers,reggae,excited,0.9,125,0.8,0.9,0.25
