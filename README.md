@@ -1,118 +1,196 @@
-# 🎵 Music Recommender Simulation
+# VibeMatch Applied AI Music Recommender
 
-## Project Summary
+VibeMatch is an explainable music recommendation system that turns a saved profile or natural-language listening request into ranked song recommendations. It extends a classroom content-based recommender into a small applied AI system with retrieval, an observable agentic workflow, confidence scoring, guardrails, logging, and a repeatable evaluation harness.
 
-Music recommendation systems, like those used by Spotify and YouTube, analyze user behavior and song attributes to suggest tracks users might enjoy, often combining collaborative filtering (based on similar users) with content-based methods. This music recommender uses content-based filtering, which recommends songs by comparing their features to a user's preferences, without relying on other users' data. Songs are scored based on genre (2 points for exact match), mood (1 point for match), and energy similarity (0-1 score based on closeness to the user's target). For each song, the total score combines these elements, rewarding closer matches. Songs are then ranked by score in descending order, with the top recommendations presented first. This approach ensures personalized suggestions tailored to individual tastes. However, it may have bias toward genre matches, potentially overlooking great songs in similar but unmatched genres. Future versions could adjust weights or add more features for balance.
----
+## Original Project
 
-## How The System Works
+This project began as the Module 3 Music Recommender Simulation. The original version loaded a small CSV catalog and ranked songs using simple content-based filtering: genre match, mood match, and energy similarity. It was useful for learning recommender basics, but it had limited reliability checks, no retrieval step, no system trace, and only basic documentation.
 
-### Features for Song and UserProfile Objects
+## What It Does
 
-#### 1. Song Object Features
-The Song object represents individual tracks with attributes extracted from the dataset. Each feature is stored as a simple data type for easy comparison.
+Users can choose a preset listener profile or enter a natural-language request such as `chill lofi study music`. The system parses the request, retrieves relevant catalog songs, ranks them with transparent scoring, reports confidence, and flags possible mismatch risks such as low confidence or energy/acoustic mismatch.
 
-- **genre** (string): The musical style category, e.g., "pop", "rock", or "lofi". Used to match broad preferences.
-- **mood** (string): The emotional tone, e.g., "happy", "chill", or "intense". Helps capture the song's vibe.
-- **energy** (float, 0-1): A measure of intensity and loudness, where 1 is high energy (e.g., for upbeat tracks).
-- **tempo_bpm** (integer): The speed in beats per minute, e.g., 120 for moderate pace. Affects rhythm.
-- **valence** (float, 0-1): A measure of positivity, where 1 is very happy/sad (optional for mood refinement).
+## Architecture
 
-#### 2. UserProfile Features
-The UserProfile object stores a user's preferences, initialized from input or defaults. It mirrors Song features for direct comparison.
+![VibeMatch system architecture](assets/system_architecture.svg)
 
-- **preferred_genre** (string or list of strings): The user's favorite genre(s), e.g., "pop". Used for exact or partial matches.
-- **preferred_mood** (string or list of strings): The user's desired mood(s), e.g., "chill". Matches emotional tone.
-- **preferred_energy** (float, 0-1): The user's ideal energy level, e.g., 0.8 for high intensity.
-- **preferred_tempo_bpm** (integer): The user's preferred tempo, e.g., 100 for moderate speed.
-- **preferred_valence** (float, 0-1): The user's desired positivity level, e.g., 0.7 for upbeat (optional).
+Data flows through five main components:
 
-These features keep the system beginner-friendly: use dictionaries or classes in Python, with simple scoring (e.g., 1 if genre matches, 1 - |diff| for numerical). Load from CSV for Songs, prompt user for UserProfile.
+1. Human input supplies either a saved profile or a natural-language request.
+2. The profile parser extracts genre, mood, target energy, and acoustic preference.
+3. The retriever searches the song catalog for evidence-backed candidates before scoring.
+4. The ranking agent scores candidates, diversifies the final list, and explains each result.
+5. Guardrails, logs, and the evaluation harness check reliability and make behavior easier to audit.
 
-### Designing a Scoring Function for Numerical Features
+## AI Features
 
-For content-based recommenders, a scoring function for numerical features (e.g., energy on a 0-1 scale) should output higher values for songs closer to the user's preferred value and lower values for those farther away. This creates a similarity score where 1 is perfect match and 0 is maximum difference.
+**Retrieval-Augmented Recommendation:** The recommender retrieves candidate songs from `data/songs.csv` using genre, mood, energy fit, and query-term evidence before generating final recommendations.
 
-#### 1. Simple Mathematical Formula
-Assuming features are normalized to [0, 1] (common for energy, valence, etc.), use:
+**Agentic Workflow:** `recommend_with_context` follows visible steps: validate preferences, retrieve candidates, rank songs, check guardrails, and return a trace of intermediate decisions.
 
-**score = 1 - |feature_value - user_preference|**
+**Reliability System:** `src/evaluate.py` runs predefined cases and prints pass/fail results plus average confidence. The unit tests also cover ranking, prompt parsing, retrieval traces, and evaluation summaries.
 
-- `feature_value`: The song's value (e.g., 0.8 for energy).
-- `user_preference`: The user's preferred value (e.g., 0.7 for energy).
-- `| |`: Absolute value to handle both directions.
-
-For features not in [0, 1] (e.g., tempo_bpm), first normalize: `normalized_feature = (feature - min_value) / (max_value - min_value)`.
-
-#### 2. Explanation of How It Works
-- The absolute difference `|feature_value - user_preference|` measures dissimilarity (0 = identical, 1 = opposite).
-- Subtracting from 1 inverts it: closer values yield higher scores (rewarding similarity), farther values yield lower scores (penalizing difference).
-- Result is always between 0 and 1, making it easy to combine with other features (e.g., average scores across multiple attributes).
-- This is a linear penalty—simple and intuitive, but you could use exponential decay (e.g., `exp(-|diff| * weight)`) for sharper rewards/penalties.
-
-#### 3. Small Example Calculation
-User prefers energy = 0.7.  
-- Song A: energy = 0.8 → |0.8 - 0.7| = 0.1 → score = 1 - 0.1 = **0.9** (high reward, very similar).  
-- Song B: energy = 0.5 → |0.5 - 0.7| = 0.2 → score = 1 - 0.2 = **0.8** (moderate reward).  
-- Song C: energy = 0.2 → |0.2 - 0.7| = 0.5 → score = 1 - 0.5 = **0.5** (moderate penalty).  
-- Song D: energy = 0.0 → |0.0 - 0.7| = 0.7 → score = 1 - 0.7 = **0.3** (strong penalty, very different).  
-
-In a recommender, sort songs by total score (sum across features) to prioritize the best matches.
-
-### Potential Biases
-
-1. **Genre Lock-In**: Heavy prioritization of genre can trap users in a single style (e.g., always recommending pop), reducing exposure to similar but unmatched genres like indie or alternative, limiting musical discovery.
-2. **Mood Overshadowing**: With mood as secondary, subtle emotional differences (e.g., "relaxed" vs. "chill") may be ignored, leading to recommendations that don't align with the user's current emotional state.
-3. **Energy Insensitivity**: Low weighting on energy means small intensity differences (e.g., 0.8 vs. 0.9) have minimal impact, potentially recommending overly energetic songs for calm users or vice versa.
-4. **Dataset Imbalance**: If the CSV has more songs in certain genres (e.g., pop dominates), the system biases toward those, even if user preferences lean elsewhere, reflecting data collection flaws rather than true taste.
----
-
-## Getting Started
-
-### Setup
-
-1. Create a virtual environment (optional but recommended):
-
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate      # Mac or Linux
-   .venv\Scripts\activate         # Windows
-
-2. Install dependencies
+## Setup
 
 ```bash
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-3. Run the app:
+On Windows, activate with:
 
 ```bash
-python -m src.main
+.venv\Scripts\activate
 ```
 
-### Running Tests
+## Run The App
 
-Run the starter tests with:
+Launch the interactive dashboard:
+
+```bash
+streamlit run src/main.py
+```
+
+The dashboard includes saved profiles, natural-language requests, custom profile controls, confidence filtering, recommendation explanations, retrieval traces, reliability results, and a searchable catalog view.
+
+To enable real Spotify catalog recommendations, create a Spotify app and set your credentials before launching:
+
+```bash
+export SPOTIFY_CLIENT_ID="your-client-id"
+export SPOTIFY_CLIENT_SECRET="your-client-secret"
+streamlit run src/main.py
+```
+
+Then turn on **Use real Spotify catalog** in the sidebar. The app uses Spotify catalog search, not private user data, so no listener login is required.
+
+Use a saved profile:
+
+```bash
+python -m src.main --profile 2 --show-trace
+```
+
+Use a natural-language request:
+
+```bash
+python -m src.main --query "relaxed acoustic coffee shop jazz" --show-trace
+```
+
+Use Spotify from the command line:
+
+```bash
+python -m src.main --query "intense rock workout" --spotify --k 3
+```
+
+Run the reliability harness:
+
+```bash
+python -m src.evaluate
+```
+
+Run automated tests:
 
 ```bash
 pytest
 ```
 
-You can add more tests in `tests/test_recommender.py`.
+## Sample Interactions
 
----
+### Example 1: Chill Study Request
 
-## Experiments You Tried
+Input:
 
-**Experiment Summary:**
-I tested how different weight configurations affected recommendation quality across user profiles. When I reduced the genre weight from 2.0 to 0.5, the system began recommending songs from adjacent genres (e.g., indie for pop-lovers), which improved discovery but sometimes felt less cohesive. Adding valence (0.5 weight) to the scoring function made a noticeable difference for users with strong emotional preferences—happy-seeking users got more upbeat recommendations. Testing with three different user archetypes (the "chill listener" preferring low energy, the "workout enthusiast" wanting high energy, and the "genre chameleon" with mixed preferences) revealed a clear bias: the system excelled for users who matched the dataset's dominant pop/lofi blend but struggled to serve the workout user well due to limited high-energy rock tracks. This confirmed the README's concern about genre lock-in and dataset imbalance.
+```bash
+python -m src.main --query "chill lofi study music" --show-trace
+```
 
----
+Expected output summary:
 
-## Limitations and Risks
+```text
+Parsed request: chill lofi study music
+Profile: genre=lofi, mood=chill, energy=0.35, acoustic=True
+Retrieved evidence:
+- Library Rain: catalog genre=lofi; catalog mood=chill; energy is close to target
+- Midnight Coding: catalog genre=lofi; catalog mood=chill; energy is close to target
 
-**Key Limitations:**
-This recommender operates on a tiny catalog (~20 songs), making it prone to repetitive recommendations and unable to serve users with niche preferences. The system only considers structured metadata (genre, mood, energy, tempo, valence) and cannot understand song lyrics, cultural context, or subtle nuances in musical taste—a song's themes or storytelling are completely invisible to the algorithm. It significantly over-favors genre matches due to the 2-point weight, which can trap users in filter bubbles and suppress discovery of cross-genre gems. The energy and valence features, while helpful, rely on simplistic numerical comparisons that don't capture subjective listener preferences (some users enjoy variability, others consistency). Finally, any dataset imbalances in the CSV directly translate to systematic bias: if pop songs outnumber rock songs 3-to-1, the system will inherently recommend more pop even if the user's preferences are perfectly balanced. These limitations are intentional trade-offs for a classroom simulation but would require significant enhancement for real-world deployment.
+Top recommendations:
+Title: Library Rain by Paper Lanterns
+Score: high match | Confidence: high
+Reasons include exact genre, exact mood, energy similarity, acoustic fit, and retrieval evidence.
+```
 
----
+### Example 2: Workout Request
 
+Input:
+
+```bash
+python -m src.main --query "intense rock workout" --show-trace
+```
+
+Expected output summary:
+
+```text
+Profile: genre=rock, mood=intense, energy=0.90, acoustic=False
+Top recommendations include Storm Runner and Thunder Storm, with reasons based on intense mood,
+high energy, and rock/metal genre evidence.
+```
+
+### Example 3: Reliability Evaluation
+
+Input:
+
+```bash
+python -m src.evaluate
+```
+
+Current result:
+
+```text
+VibeMatch reliability evaluation
+Passed: 5 / 5
+Average confidence: 0.78
+```
+
+## Design Decisions
+
+I used transparent scoring instead of a black-box model because the dataset is small and the project needs clear explanations. Retrieval is based on song metadata and query evidence, which makes it easy to inspect why a song was considered. Confidence is calculated from the final score, so it is not a perfect probability, but it gives a useful warning signal when the match is weak.
+
+The system also diversifies recommendations when possible. This reduces genre lock-in, but it can slightly lower the score of the last few results. I chose that trade-off because a music recommender should support discovery, not only repeat the narrowest possible match.
+
+## Testing Summary
+
+The test suite covers:
+
+- Original recommender sorting behavior.
+- Non-empty recommendation explanations.
+- Agent trace, retrieval, confidence, and guardrail structure.
+- Natural-language prompt parsing.
+- Evaluation harness pass/fail summaries.
+
+The reliability harness currently passes 5 out of 5 predefined cases. The hardest case is an unknown genre request, where the system must fall back to adjacent mood and acoustic evidence while warning that the requested genre is not represented.
+
+## Limitations And Ethics
+
+The catalog is tiny, so the system can overrepresent genres that happen to have more rows. Metadata labels such as mood and genre are subjective, and different listeners may disagree with them. The confidence score measures fit to the system's rules, not true human satisfaction.
+
+This system could be misused if it claimed to know a person's real identity, emotions, or mental health from music preferences. To prevent that, VibeMatch only uses explicit user input and catalog metadata, and its explanations stay focused on music features.
+
+Testing surprised me because adjacent genres improved discovery, but they also made evaluation more complex. A recommendation can be technically different from the requested genre and still be useful, so the tests check acceptable genre and mood families rather than exact matches only.
+
+## AI Collaboration Reflection
+
+AI was helpful in suggesting that a simple recommender could become more professional by adding a traceable workflow, confidence scoring, and evaluation cases. A flawed suggestion was to treat the confidence score like a statistical probability; I corrected that by documenting it as a rule-based fit score rather than a true probability.
+
+## Demo Walkthrough
+
+Loom video link: add your recording link here after recording the required 2-3 end-to-end examples.
+
+Suggested video flow:
+
+1. Run `python -m src.main --profile 2 --show-trace`.
+2. Run `python -m src.main --query "intense rock workout" --show-trace`.
+3. Run `python -m src.evaluate` to show reliability behavior.
+
+## Portfolio Artifact
+
+This project shows that I can turn a simple prototype into a more complete AI system: one with retrieval, reasoning steps, testing, guardrails, and documentation. As an AI engineer, it represents my ability to build systems that are not only functional, but also explainable and responsible.

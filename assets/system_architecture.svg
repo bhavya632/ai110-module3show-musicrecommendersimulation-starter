@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="640" viewBox="0 0 1100 640" role="img" aria-labelledby="title desc">
+  <title id="title">VibeMatch system architecture</title>
+  <desc id="desc">Data flow from user request through profile parser, retriever, ranking agent, guardrails, recommendations, logs, and evaluation harness.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#334155"/>
+    </marker>
+    <style>
+      .bg { fill: #f8fafc; }
+      .box { fill: #ffffff; stroke: #334155; stroke-width: 2; rx: 8; }
+      .data { fill: #ecfeff; stroke: #0f766e; stroke-width: 2; rx: 8; }
+      .check { fill: #fefce8; stroke: #a16207; stroke-width: 2; rx: 8; }
+      .text { font-family: Arial, sans-serif; fill: #0f172a; font-size: 20px; font-weight: 700; }
+      .small { font-family: Arial, sans-serif; fill: #334155; font-size: 15px; }
+      .line { stroke: #334155; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect class="bg" x="0" y="0" width="1100" height="640"/>
+
+  <rect class="box" x="55" y="70" width="210" height="105"/>
+  <text class="text" x="85" y="112">Human Input</text>
+  <text class="small" x="85" y="142">Saved profile or natural</text>
+  <text class="small" x="85" y="162">language music request</text>
+
+  <rect class="box" x="330" y="70" width="210" height="105"/>
+  <text class="text" x="360" y="112">Profile Parser</text>
+  <text class="small" x="360" y="142">Extracts genre, mood,</text>
+  <text class="small" x="360" y="162">energy, acoustic fit</text>
+
+  <rect class="data" x="330" y="265" width="210" height="105"/>
+  <text class="text" x="370" y="307">Song Catalog</text>
+  <text class="small" x="370" y="337">CSV metadata: genre,</text>
+  <text class="small" x="370" y="357">mood, energy, audio features</text>
+
+  <rect class="box" x="615" y="70" width="220" height="105"/>
+  <text class="text" x="645" y="112">Retriever</text>
+  <text class="small" x="645" y="142">Finds evidence-backed</text>
+  <text class="small" x="645" y="162">candidate songs</text>
+
+  <rect class="box" x="615" y="265" width="220" height="105"/>
+  <text class="text" x="645" y="307">Ranking Agent</text>
+  <text class="small" x="645" y="337">Scores, explains, diversifies,</text>
+  <text class="small" x="645" y="357">and estimates confidence</text>
+
+  <rect class="check" x="890" y="265" width="165" height="105"/>
+  <text class="text" x="918" y="307">Guardrails</text>
+  <text class="small" x="918" y="337">Warn on low confidence</text>
+  <text class="small" x="918" y="357">or mismatch risks</text>
+
+  <rect class="box" x="890" y="70" width="165" height="105"/>
+  <text class="text" x="922" y="112">Output</text>
+  <text class="small" x="922" y="142">Ranked songs with</text>
+  <text class="small" x="922" y="162">reasons and confidence</text>
+
+  <rect class="check" x="180" y="465" width="250" height="105"/>
+  <text class="text" x="215" y="507">Evaluation Harness</text>
+  <text class="small" x="215" y="537">Predefined cases produce</text>
+  <text class="small" x="215" y="557">pass/fail and confidence</text>
+
+  <rect class="data" x="615" y="465" width="220" height="105"/>
+  <text class="text" x="668" y="507">Logs</text>
+  <text class="small" x="668" y="537">Retrieval counts, warnings,</text>
+  <text class="small" x="668" y="557">and system behavior</text>
+
+  <path class="line" d="M265 122 H330"/>
+  <path class="line" d="M540 122 H615"/>
+  <path class="line" d="M540 318 H615"/>
+  <path class="line" d="M725 175 V265"/>
+  <path class="line" d="M835 318 H890"/>
+  <path class="line" d="M972 265 V175"/>
+  <path class="line" d="M430 518 H615"/>
+  <path class="line" d="M305 465 C305 410 360 392 430 370"/>
+  <path class="line" d="M725 370 V465"/>
+</svg>
